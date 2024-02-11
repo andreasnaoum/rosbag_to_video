@@ -25,3 +25,11 @@ This Python script extracts video frames from ROS bag files, specifically from m
 ```bash
 python your_script_name.py -source <bag_file_path> -topic <video_topic_name> -output <output_video_file_path> [-first_image <first_image_file_path>] [-width <video_frame_width>] [-height <video_frame_height>]
 ```
+
+##  Contributing
+
+Feel free to contribute to the project by opening issues or submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License.
