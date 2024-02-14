@@ -3,6 +3,42 @@ import cv2
 from ros import rosbag
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+import numpy as np
+
+def extract_video_compressed(bag_path, topic_name, video_path, first_image_path, width, height):
+    print('Opening bag')
+    bag = rosbag.Bag(bag_path)
+
+    # OpenCV bridge to convert ROS Image messages to OpenCV images
+    bridge = CvBridge()
+
+    # Video writer setup
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video_writer = cv2.VideoWriter(video_path, fourcc, 20.0, (width, height))  # Adjust the resolution if needed
+
+    print('Reading video frames and saving to video file')
+    frame_count = 100
+
+    first_image_saved = False
+
+    for topic, msg, stamp in bag.read_messages(topics=[topic_name]):
+
+        if msg._type == 'sensor_msgs/CompressedImage':
+            frame_count += 1
+
+            cv_image = cv2.imdecode(np.frombuffer(msg.data, dtype=np.uint8), cv2.IMREAD_COLOR)
+
+            # Save the first image separately
+            if not first_image_saved:
+                cv2.imwrite(first_image_path, cv_image)
+                first_image_saved = True
+
+            # Write the frame to the video file
+            video_writer.write(cv_image)
+
+    bag.close()
+    video_writer.release()
+    print('Done. %d video frames written to %s' % (frame_count, video_path))
 
 
 def extract_video(bag_path, topic_name, video_path, first_image_path, width, height):
@@ -22,7 +58,8 @@ def extract_video(bag_path, topic_name, video_path, first_image_path, width, hei
     first_image_saved = False
 
     for topic, msg, stamp in bag.read_messages(topics=[topic_name]):
-        if msg._type == 'sensor_msgs/Image':
+        # if msg._type == 'sensor_msgs/Image':
+        if msg._type == 'sensor_msgs/CompressedImage':
             frame_count += 1
             # Convert ROS Image message to OpenCV image
             cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -48,7 +85,11 @@ if __name__ == '__main__':
     parser.add_argument('-first_image', dest='first_image_path', help='Path to save the first image')
     parser.add_argument('-width', dest='width', type=int, default=960, help='Width of the video frames (default: 960)')
     parser.add_argument('-height', dest='height', type=int, default=600, help='Height of the video frames (default: 600)')
+    parser.add_argument('-compressed', dest='compressed', action='store_true', help='Specify if the ROS bag contains compressed images')
 
     args = parser.parse_args()
 
-    extract_video(args.bag_path, args.topic_name, args.video_path, args.first_image_path, args.width, args.height)
+    if args.compressed:
+        extract_video_compressed(args.bag_path, args.topic_name, args.video_path, args.first_image_path, args.width, args.height)
+    else:
+        extract_video(args.bag_path, args.topic_name, args.video_path, args.first_image_path, args.width, args.height)
