@@ -1,6 +1,6 @@
 # ROS Bag to Video Converter
 
-Converts video data from ROS bag files containing sensor_msgs/Image messages to a video file. Supports both uncompressed and compressed image messages.
+Converts video data from ROS bag files containing image messages to a video file. Supports both uncompressed and compressed image messages.
 
 ## Overview
 
